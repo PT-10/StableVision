@@ -9,10 +9,10 @@ from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from model.path_smooth_net import PathSmoothUNet
-from image_warper.flow_warper import FlowWarper
+from .model.path_smooth_net import PathSmoothUNet
+from .image_warper.flow_warper import FlowWarper
 from .metrices import MetricAnalyzer
-from dataset.nus_dataset import NUSDataset
+from .dataset.nus_dataset import NUSDataset
 from .utils import getAllFileInDir, load_checkpoint, concatImagesHorizon, RunningAverage, checkAndMakeDir
 
 
