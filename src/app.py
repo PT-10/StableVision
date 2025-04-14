@@ -7,6 +7,7 @@ from classical.optical_flow.optical_flow import optical_flow
 from classical.block_matching.block_matching import block_matching
 from classical.bitplane_matching.bitplane_matching import bitplane_matching
 from classical.l1_optimal_paths.l1_optimal_paths import l1_optimal_stabilization
+from NNDVS.eval_nus import stabilize_video
 
 st.title("Stable Vision")
 
@@ -16,7 +17,7 @@ uploaded_file = st.file_uploader("Upload a video", type=["mp4"])
 st.sidebar.header("Settings")
 method = st.sidebar.selectbox(
     "Select stabilization method:",
-    ("Optical Flow", "Block Matching", "Bitplane Matching", "L1 Optimal Paths")
+    ("Optical Flow", "Block Matching", "Bitplane Matching", "L1 Optimal Paths", "NNDVS")
 )
 
 # Show sliders for method-specific arguments
@@ -61,6 +62,9 @@ with st.sidebar.expander("Options",expanded=False):
 
     elif method == "L1 Optimal Paths":
         crop_ratio = st.slider("Crop Ratio", min_value=0.5, max_value=1.0, value=0.8, step=0.05)
+    
+
+
         
 if uploaded_file is not None:
     # Save uploaded file to a temp file
@@ -125,6 +129,10 @@ if uploaded_file is not None:
             output_path = l1_optimal_stabilization(input_path,
                                                     output_filename,
                                                     crop_ratio=crop_ratio)
+        
+        elif method == "NNDVS":
+            start_time = time.time()
+            output_path = stabilize_video(input_path, output_filename,create_comparison=False)
 
         print("Output path:", output_path)
         print("File exists:", os.path.exists(output_path))
