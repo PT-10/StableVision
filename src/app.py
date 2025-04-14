@@ -9,6 +9,8 @@ from classical.bitplane_matching.bitplane_matching import bitplane_matching
 
 st.title("Stable Vision")
 
+uploaded_file = st.file_uploader("Upload a video", type=["mp4"])
+
 # Sidebar: Method selection and file upload
 st.sidebar.header("Settings")
 method = st.sidebar.selectbox(
@@ -16,34 +18,46 @@ method = st.sidebar.selectbox(
     ("Optical Flow", "Block Matching", "Bitplane Matching")
 )
 
-uploaded_file = st.sidebar.file_uploader("Upload a video", type=["mp4"])
-
 # Show sliders for method-specific arguments
-with st.sidebar.expander("Advanced Parameters", expanded=False):
+with st.sidebar.expander("Options",expanded=False):
     if method == "Optical Flow":
-        st.subheader("Optical Flow Parameters")
-        smoothing_radius = st.slider("Smoothing Radius", min_value=10, max_value=100, value=30, step=5)
-        use_kalman = st.checkbox("Use Kalman Filter", value=False)
+        # st.subheader("Optical Flow Methods")
         optical_flow_method = st.selectbox(
             "Select optical flow method:",
             ("Lucas-Kanade", "Horn-Schunck", "Farneback")
         )
+        feature_tracker = None
+        if optical_flow_method == "Lucas-Kanade":
+            feature_tracker = st.selectbox(
+                "Select feature tracking method:",
+                ("GFTT (Shi Tomasi)", "HARRIS", "FAST")
+            )
+
+        elif optical_flow_method == "Farneback":
+            feature_tracker = st.selectbox(
+                "Select feature tracking method:",
+                ("GFTT (Shi Tomasi)","HARRIS", "SIFT")
+            )
+        
+        use_kalman = st.checkbox("Use Kalman Filter", value=False)
+        smoothing_radius = st.slider("Smoothing Radius", min_value=10, max_value=100, value=30, step=5)
         max_corners = st.slider("Max Corners", min_value=50, max_value=500, value=200, step=10)
         quality_level = st.slider("Quality Level", min_value=0.01, max_value=0.1, value=0.01, step=0.01)
         min_distance = st.slider("Min Distance", min_value=5, max_value=50, value=30, step=5)
         block_size = st.slider("Block Size", min_value=3, max_value=15, value=3, step=2)
 
     elif method == "Bitplane Matching":
-        st.subheader("Bitplane Matching Parameters")
+        # st.subheader("Bitplane Matching Parameters")
         smoothing_radius = st.slider("Smoothing Radius", min_value=10, max_value=100, value=50, step=5)
         scale = st.slider("Scale", min_value=1.0, max_value=2.0, value=1.04, step=0.01)
 
     elif method == "Block Matching":
-        st.subheader("Block Matching Parameters")
+        # st.subheader("Block Matching Parameters")
+        use_kalman = st.checkbox("Use Kalman Filter", value=False)
         smoothing_radius = st.slider("Smoothing Radius", min_value=10, max_value=100, value=30, step=5)
         block_size = st.slider("Block Size", min_value=8, max_value=64, value=16, step=8)
         search_area = st.slider("Search Area", min_value=8, max_value=64, value=16, step=8)
-        use_kalman = st.checkbox("Use Kalman Filter", value=False)
+        
 
 
 if uploaded_file is not None:
@@ -66,7 +80,10 @@ if uploaded_file is not None:
                 "Farneback": "farneback"
             }
             selected_method = method_mapping[optical_flow_method]
-
+            if feature_tracker is not None:
+                st.write(f"Using {selected_method} with {feature_tracker}")
+            else:
+                st.write(f"Using {selected_method}")
             start_time = time.time()
             output_path = optical_flow(
                 input_path, 
@@ -74,6 +91,7 @@ if uploaded_file is not None:
                 smoothing_radius=smoothing_radius, 
                 use_kalman=use_kalman, 
                 method = selected_method,
+                feature_tracker = feature_tracker,
                 maxCorners=max_corners, 
                 qualityLevel=quality_level, 
                 minDistance=min_distance, 
@@ -106,7 +124,7 @@ if uploaded_file is not None:
 
     st.success(f"Video stabilization complete! Process completed in {time.time()-start_time:.2f} seconds")
 
-    with st.spinner("Finalizing the output... Please wait for 10 seconds."):
+    with st.spinner("Finalizing the output... Please wait"):
         time.sleep(1)
 
     col1, col2 = st.columns(2)

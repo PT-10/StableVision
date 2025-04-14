@@ -10,6 +10,7 @@ def optical_flow(input_path: str, output_filename: str,
                  smoothing_radius: int = 30,
                  use_kalman: bool = False,
                  method: str = 'lk',  # 'lk', 'farneback', 'horn-schunck'
+                 feature_tracker: str = "GFTT (Shi Tomasi)", # 'HARRIS', 'GFTT (Shi Tomasi)', 'FAST', 'SIFT'
                  maxCorners=200,
                  qualityLevel=0.01,
                  minDistance=30,
@@ -43,7 +44,36 @@ def optical_flow(input_path: str, output_filename: str,
         curr_gray = cv2.cvtColor(curr_frame, cv2.COLOR_BGR2GRAY)
 
         if method == 'lk':
-            prev_points = cv2.goodFeaturesToTrack(prev_gray, maxCorners, qualityLevel, minDistance, blockSize)
+            # Feature detection for Lucas-Kanade
+            if feature_tracker == 'HARRIS':
+                feature_params = dict(
+                    maxCorners=maxCorners,
+                    qualityLevel=qualityLevel,
+                    minDistance=minDistance,
+                    blockSize=blockSize,
+                    useHarrisDetector=True,
+                    k=0.04
+                )
+                prev_points = cv2.goodFeaturesToTrack(prev_gray, **feature_params)
+
+            elif feature_tracker == 'GFTT (Shi Tomasi)':
+                feature_params = dict(
+                    maxCorners=maxCorners,
+                    qualityLevel=qualityLevel,
+                    minDistance=minDistance,
+                    blockSize=blockSize
+                )
+                prev_points = cv2.goodFeaturesToTrack(prev_gray, **feature_params)
+
+            elif feature_tracker == 'FAST':
+                fast = cv2.FastFeatureDetector_create()
+                keypoints = fast.detect(prev_gray, None)
+                prev_points = cv2.KeyPoint_convert(keypoints)
+
+            else:
+                raise ValueError(f"Unsupported feature tracker for Lucas-Kanade: {feature_tracker}")
+
+            #calculate optical flow
             curr_points, status, _ = cv2.calcOpticalFlowPyrLK(prev_gray, curr_gray, prev_points, None)
             idx = np.where(status == 1)[0]
             prev_points = prev_points[idx]
@@ -55,6 +85,35 @@ def optical_flow(input_path: str, output_filename: str,
             da = np.arctan2(matrix[1, 0], matrix[0, 0])
 
         elif method == 'farneback':
+            # Feature detection for Farneback
+            if feature_tracker == 'GFTT (Shi Tomasi)':
+                feature_params = dict(
+                    maxCorners=maxCorners,
+                    qualityLevel=qualityLevel,
+                    minDistance=minDistance,
+                    blockSize=blockSize
+                )
+                prev_points = cv2.goodFeaturesToTrack(prev_gray, **feature_params)
+
+            elif feature_tracker == 'HARRIS':
+                feature_params = dict(
+                    maxCorners=maxCorners,
+                    qualityLevel=qualityLevel,
+                    minDistance=minDistance,
+                    blockSize=blockSize,
+                    useHarrisDetector=True,
+                    k=0.04
+                )
+                prev_points = cv2.goodFeaturesToTrack(prev_gray, **feature_params)
+
+            elif feature_tracker == 'SIFT':
+                sift = cv2.SIFT_create()
+                keypoints = sift.detect(prev_gray, None)
+                prev_points = cv2.KeyPoint_convert(keypoints)
+
+            else:
+                raise ValueError(f"Unsupported feature tracker for Farneback: {feature_tracker}")
+
             flow = cv2.calcOpticalFlowFarneback(prev_gray, curr_gray, None,
                                                 0.5, 3, 15, 3, 5, 1.2, 0)
             dx = np.mean(flow[..., 0])
