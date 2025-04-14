@@ -11,9 +11,9 @@ from tqdm import tqdm
 
 from model import PathSmoothUNet
 from image_warper import FlowWarper
-from metrices import MetricAnalyzer
+from .metrices import MetricAnalyzer
 from dataset import NUSDataset
-from utils import getAllFileInDir, load_checkpoint, concatImagesHorizon, RunningAverage, checkAndMakeDir
+from .utils import getAllFileInDir, load_checkpoint, concatImagesHorizon, RunningAverage, checkAndMakeDir
 
 
 class VideoStabilizer:
