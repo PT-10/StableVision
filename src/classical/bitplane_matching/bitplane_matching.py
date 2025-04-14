@@ -17,7 +17,7 @@ def calculate_moving_average(curve, radius):
     """Calculate the moving average of a curve using a given radius"""
     window_size = 2 * radius + 1
     kernel = np.ones(window_size) / window_size
-    curve_padded = np.lib.pad(curve, (radius, radius), 'edge')
+    curve_padded = np.pad(curve, (radius, radius), 'edge')
     smoothed_curve = np.convolve(curve_padded, kernel, mode='same')
     return smoothed_curve[radius:-radius]
 
