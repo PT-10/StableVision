@@ -6,6 +6,7 @@ from utils.codec_conversion import ensure_h264_compliance
 from classical.optical_flow.optical_flow import optical_flow
 from classical.block_matching.block_matching import block_matching
 from classical.bitplane_matching.bitplane_matching import bitplane_matching
+from classical.l1_optimal_paths.l1_optimal_paths import l1_optimal_stabilization
 
 st.title("Stable Vision")
 
@@ -15,7 +16,7 @@ uploaded_file = st.file_uploader("Upload a video", type=["mp4"])
 st.sidebar.header("Settings")
 method = st.sidebar.selectbox(
     "Select stabilization method:",
-    ("Optical Flow", "Block Matching", "Bitplane Matching")
+    ("Optical Flow", "Block Matching", "Bitplane Matching", "L1 Optimal Paths")
 )
 
 # Show sliders for method-specific arguments
@@ -57,9 +58,10 @@ with st.sidebar.expander("Options",expanded=False):
         smoothing_radius = st.slider("Smoothing Radius", min_value=10, max_value=100, value=30, step=5)
         block_size = st.slider("Block Size", min_value=8, max_value=64, value=16, step=8)
         search_area = st.slider("Search Area", min_value=8, max_value=64, value=16, step=8)
+
+    elif method == "L1 Optimal Paths":
+        crop_ratio = st.slider("Crop Ratio", min_value=0.5, max_value=1.0, value=0.8, step=0.05)
         
-
-
 if uploaded_file is not None:
     # Save uploaded file to a temp file
     with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_input:
@@ -117,6 +119,12 @@ if uploaded_file is not None:
                 smoothing_radius=smoothing_radius, 
                 scale=scale
             )
+
+        elif method == "L1 Optimal Paths":
+            start_time = time.time()
+            output_path = l1_optimal_stabilization(input_path,
+                                                    output_filename,
+                                                    crop_ratio=crop_ratio)
 
         print("Output path:", output_path)
         print("File exists:", os.path.exists(output_path))
