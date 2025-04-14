@@ -18,7 +18,7 @@ from .utils import getAllFileInDir, load_checkpoint, concatImagesHorizon, Runnin
 
 class VideoStabilizer:
     def __init__(self, model_path=None, net_radius=15, scale_factor=8, latency=0, 
-                 num_workers=4, bs=1, con_num=1, motion_dir=None):
+                 num_workers=4, bs=1, con_num=1, motion_dir = "NNDVS/motion_data"):
         """
         Initialize the Video Stabilizer.
         
@@ -56,11 +56,11 @@ class VideoStabilizer:
             level=logging.INFO,
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
-        self.logger = logging.getLogger(__name__)
+        # self.logger = logging.getLogger(__name__)
         
     def load_model(self, model_path):
         """Load the pretrained stabilization model"""
-        self.logger.info(f"Loading Pretrained Model From: {model_path}")
+        # self.logger.info(f"Loading Pretrained Model From: {model_path}")
         self.net = PathSmoothUNet(4 * self.net_radius)
         self.net = nn.DataParallel(self.net)
         torch.backends.cudnn.benchmark = False
@@ -105,7 +105,7 @@ class VideoStabilizer:
         )
         
         run_num = 0
-        self.logger.info("Computing warp transformations...")
+        # self.logger.info("Computing warp transformations...")
         with torch.no_grad():
             for flows, _ in tqdm(dataloader, desc="Processing frames"):
                 flows = -flows.cuda()
@@ -117,7 +117,7 @@ class VideoStabilizer:
                 
         return warp_trans
     
-    def render_stabilized_video(self, input_path, output_path, warp_trans, create_comparison=False):
+    def render_stabilized_video(self, input_path, output_filename, warp_trans, create_comparison=False):
         """Render stabilized video using warp transformations"""
         # Open input video
         capture = cv2.VideoCapture()
@@ -127,7 +127,8 @@ class VideoStabilizer:
         frame_width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
         frame_height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps = capture.get(cv2.CAP_PROP_FPS)
-        fourcc = int(capture.get(cv2.CAP_PROP_FOURCC))
+        # fourcc = int(capture.get(cv2.CAP_PROP_FOURCC))
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
         
         # Initialize image warper
@@ -137,16 +138,28 @@ class VideoStabilizer:
         trans_length = min(frame_count, warp_trans.shape[0])
         
         # Prepare output video
-        output_dir = os.path.dirname(output_path)
-        if output_dir and not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+        # output_dir = os.path.dirname(output_path)
+
+        current_dir = os.path.abspath(os.path.dirname(__file__))
+        outputs_dir = os.path.join(current_dir, "outputs")
+        os.makedirs(outputs_dir, exist_ok=True)
+
+        output_path = os.path.join(outputs_dir, output_filename)
+
+
+        # if output_dir and not os.path.exists(output_dir):
+        #     os.makedirs(output_dir)
             
         # Decide if we need to crop the video (80% of original size)
         cropped_width = int(frame_width * 0.8)
         cropped_height = int(frame_height * 0.8)
+        # print(cropped_height, cropped_width)
         
         # Create video writer
         writer = cv2.VideoWriter(output_path, fourcc, fps, (cropped_width, cropped_height))
+
+        if not writer.isOpened():
+            raise RuntimeError(f"Failed to initialize VideoWriter. Check codec and output path: {output_path}")
         
         # Create comparison video if requested
         comparison_path = None
@@ -155,7 +168,7 @@ class VideoStabilizer:
             comparison_path = os.path.splitext(output_path)[0] + "_comparison.mp4"
             writer_comparison = cv2.VideoWriter(comparison_path, fourcc, fps, (cropped_width * 2, cropped_height))
         
-        self.logger.info(f"Rendering stabilized video to {output_path}")
+        # self.logger.info(f"Rendering stabilized video to {output_path}")
         frame_processed = 0
         
         # Process frames
@@ -163,28 +176,37 @@ class VideoStabilizer:
             ok, frame = capture.read()
             if not ok:
                 break
-                
+
+            h, w = frame.shape[:2]
+            top = int(0.10 * h)
+            bottom = int(0.90 * h)
+            left = int(0.10 * w)
+            right = int(0.90 * w)
+
+            cropped_frame = frame[top:bottom, left:right]
+            print(cropped_frame.shape)
+
             # Apply stabilization
-            new_frame = self.image_warper.warp_image(frame, warp_trans[i])
+            new_frame = self.image_warper.warp_image(cropped_frame, warp_trans[i])
             writer.write(new_frame)
             
             # Create comparison frame if requested
-            if writer_comparison:
-                cat_frame = concatImagesHorizon([frame, new_frame])
-                writer_comparison.write(cat_frame)
+            # if writer_comparison:
+            #     cat_frame = concatImagesHorizon([frame, new_frame])
+            #     writer_comparison.write(cat_frame)
                 
             frame_processed += 1
             
         # Release resources
         capture.release()
         writer.release()
-        if writer_comparison:
-            writer_comparison.release()
+        # if writer_comparison:
+        #     writer_comparison.release()
             
-        self.logger.info(f"Stabilized {frame_processed} frames")
+        # self.logger.info(f"Stabilized {frame_processed} frames")
         return output_path, comparison_path
 
-    def stabilize_video(self, input_path, output_filename, motion_file=None, create_comparison=False):
+    def stabilize_video(self, uploaded_file_name, input_path, output_filename, motion_file=None, create_comparison=False):
         """
         Main function to stabilize a video
         
@@ -209,11 +231,13 @@ class VideoStabilizer:
         if motion_file is None:
             if self.motion_dir:
                 # Try to find motion file in motion_dir
-                video_name = os.path.splitext(os.path.basename(input_path))[0]
+                video_name = os.path.splitext(uploaded_file_name)[0]
+                print(video_name)
                 motion_file = os.path.join(self.motion_dir, f"{video_name}.npy")
+                print(motion_file)
                 if not os.path.exists(motion_file):
                     # Generate motion file (you need to implement this part depending on your workflow)
-                    self.logger.warning(f"Motion file not found for {video_name}. Need to generate one.")
+                    # self.logger.warning(f"Motion file not found for {video_name}. Need to generate one.")
                     # Here you would generate the motion file
                     # For example: motion_file = self.generate_motion_file(input_path)
                     raise ValueError("Motion file not found. Please provide motion file or implement motion generation.")
@@ -237,7 +261,7 @@ class VideoStabilizer:
         return output_path
 
 
-def stabilize_video(input_path, output_filename, model_path, motion_dir=None, create_comparison=False):
+def stabilize_video(uploaded_file_name, input_path, output_filename, model_path, motion_dir="NNDVS/motion_data", create_comparison=False):
     """
     Easy-to-use function to stabilize a video.
     
@@ -257,6 +281,7 @@ def stabilize_video(input_path, output_filename, model_path, motion_dir=None, cr
     )
     
     return stabilizer.stabilize_video(
+        uploaded_file_name = uploaded_file_name,
         input_path=input_path,
         output_filename=output_filename,
         create_comparison=create_comparison

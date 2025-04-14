@@ -3,9 +3,9 @@ import cv2
 import numpy as np
 from tqdm import tqdm
 
-from utils import *
-from feature_tracker import KltTracker, SiftTracker
-from motion_estimater import GlobalEstimater
+from NNDVS.utils import *
+from NNDVS.feature_tracker import KltTracker, SiftTracker
+from NNDVS.motion_estimater import GlobalEstimater
 
 class MetricAnalyzer():
     def __init__(self, frame_width, frame_height, scale_factor=40, start=31):

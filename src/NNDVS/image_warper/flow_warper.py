@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-from utils import getBaseGrid
+from NNDVS.utils import getBaseGrid
 
 
 class FlowWarper():
