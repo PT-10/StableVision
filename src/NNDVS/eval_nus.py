@@ -177,18 +177,20 @@ class VideoStabilizer:
             if not ok:
                 break
 
-            h, w = frame.shape[:2]
+            
+            
+            # print(cropped_frame.shape)
+
+            # Apply stabilization
+            new_frame = self.image_warper.warp_image(frame, warp_trans[i])
+            h, w = new_frame.shape[:2]
             top = int(0.10 * h)
             bottom = int(0.90 * h)
             left = int(0.10 * w)
             right = int(0.90 * w)
 
-            cropped_frame = frame[top:bottom, left:right]
-            print(cropped_frame.shape)
-
-            # Apply stabilization
-            new_frame = self.image_warper.warp_image(cropped_frame, warp_trans[i])
-            writer.write(new_frame)
+            cropped_frame = new_frame[top:bottom, left:right]
+            writer.write(cropped_frame)
             
             # Create comparison frame if requested
             # if writer_comparison:
