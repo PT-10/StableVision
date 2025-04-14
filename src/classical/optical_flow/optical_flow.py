@@ -3,7 +3,7 @@ import numpy as np
 import os
 from .utils import *
 
-def optical_flow(input_path: str, output_filename: str, SMOOTHING_RADIUS: int = 50, use_kalman: bool = False, maxCorners=200, qualityLevel=0.01, minDistance=30, blockSize=3) -> None:
+def optical_flow(input_path: str, output_filename: str, smoothing_radius: int = 50, use_kalman: bool = False, maxCorners=200, qualityLevel=0.01, minDistance=30, blockSize=3) -> None:
     cap = cv2.VideoCapture(input_path)
 
     current_dir = os.path.abspath(os.path.dirname(__file__))
@@ -44,7 +44,7 @@ def optical_flow(input_path: str, output_filename: str, SMOOTHING_RADIUS: int = 
         prev_gray = curr_gray
 
     trajectory = np.cumsum(transforms, axis=0)
-    smoothed_trajectory = smooth_trajectory(trajectory, SMOOTHING_RADIUS, use_kalman)
+    smoothed_trajectory = smooth_trajectory(trajectory, smoothing_radius, use_kalman)
     difference = smoothed_trajectory - trajectory
     transforms_smooth = transforms + difference
 

@@ -4,7 +4,7 @@ import os
 import tempfile
 from utils.codec_conversion import ensure_h264_compliance
 from classical.optical_flow.optical_flow import optical_flow
-# from classical.block_matching.block_matching import block_matching
+from classical.block_matching.block_matching import block_matching
 from classical.bitplane_matching.bitplane_matching import bitplane_matching
 
 st.title("Stable Vision")
@@ -34,9 +34,13 @@ with st.sidebar.expander("Advanced Parameters", expanded=False):
         smoothing_radius = st.slider("Smoothing Radius", min_value=10, max_value=100, value=50, step=5)
         scale = st.slider("Scale", min_value=1.0, max_value=2.0, value=1.04, step=0.01)
 
-    # elif method == "Block Matching":
-    #     st.sidebar.subheader("Block Matching Parameters")
-    #     # Add sliders for Block Matching parameters here if needed
+    elif method == "Block Matching":
+        st.subheader("Block Matching Parameters")
+        smoothing_radius = st.slider("Smoothing Radius", min_value=10, max_value=100, value=30, step=5)
+        block_size = st.slider("Block Size", min_value=8, max_value=64, value=16, step=8)
+        search_area = st.slider("Search Area", min_value=8, max_value=64, value=16, step=8)
+        use_kalman = st.checkbox("Use Kalman Filter", value=False)
+
 
 if uploaded_file is not None:
     # Save uploaded file to a temp file
@@ -56,15 +60,25 @@ if uploaded_file is not None:
             output_path = optical_flow(
                 input_path, 
                 output_filename, 
-                SMOOTHING_RADIUS=smoothing_radius, 
+                smoothing_radius=smoothing_radius, 
                 use_kalman=use_kalman, 
                 maxCorners=max_corners, 
                 qualityLevel=quality_level, 
                 minDistance=min_distance, 
                 blockSize=block_size
             )
-        # elif method == "Block Matching":
-        #     output_path = block_matching(input_path, output_filename)
+
+        elif method == "Block Matching":
+            start_time = time.time()
+            output_path = block_matching(
+                input_path,
+                output_filename,
+                smoothing_radius=smoothing_radius,
+                block_size=block_size,
+                search_area=search_area,
+                use_kalman=use_kalman
+            )
+
         elif method == "Bitplane Matching":
             start_time = time.time()
             output_path = bitplane_matching(

@@ -46,13 +46,13 @@ def smooth_trajectory_kalman(trajectory):
     return smoothed_trajectory
 
 
-def smooth_trajectory(trajectory, SMOOTHING_RADIUS=50, use_kalman=False):
+def smooth_trajectory(trajectory, smoothing_radius=30, use_kalman=False):
     """
     Smooth the trajectory using either moving average or Kalman filter.
     
     Args:
         trajectory (np.ndarray): The original trajectory (dx, dy, da).
-        SMOOTHING_RADIUS (int): Radius for moving average smoothing.
+        smoothing_radius (int): Radius for moving average smoothing.
         use_kalman (bool): If True, use Kalman filter; otherwise, use moving average.
     
     Returns:
@@ -65,7 +65,7 @@ def smooth_trajectory(trajectory, SMOOTHING_RADIUS=50, use_kalman=False):
         for i in range(3):
             smoothed_trajectory[:, i] = calculate_moving_average(
                 trajectory[:, i],
-                radius=SMOOTHING_RADIUS
+                radius=smoothing_radius
             )
         return smoothed_trajectory
 
