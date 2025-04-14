@@ -6,9 +6,7 @@
 
 import numpy as np
 import cv2 as cv
-import matplotlib.pyplot as plt
 from .L1optimal_lpp import stabilize
-import argparse
 import os
 from os.path import join
 
@@ -31,38 +29,6 @@ def get_corners(im_shape, crop_ratio):
     crop_y = round(img_ctr_y - crop_h / 2)
     # Return corner points of crop window
     return crop_x, crop_w + crop_x, crop_y, crop_h + crop_y
-
-
-# Function to plot the original and the corrected/stabilized
-# x and y components of the camera trajectory
-def plot_trajectory(og, stb, out_path_plot):
-    # Print the trajectory and subsequently plot them
-    # print("Original camera trajectory (x, y)")
-    # print(og)
-    # print("--------------------------------")
-    # print("Stabilized camera trajectory (x, y)")
-    # print(stb)
-    # x-coordinate trajectory
-    plt.figure()
-    plt.plot(og[:, 0])
-    plt.plot(stb[:, 0])
-    plt.xlabel('Frame Number')
-    plt.ylabel('2D Camera x coord. (pixels)')
-    plt.title('Original vs Stab x')
-    plt.legend(['Original', 'Stabilized'])
-    plt.savefig(out_path_plot + "_traj_x.png")
-    plt.close()
-    # y-coordinate trajectory
-    plt.figure()
-    plt.plot(og[:, 1])
-    plt.plot(stb[:, 1])
-    plt.xlabel('Frame Number')
-    plt.ylabel('2D Camera y coord. (pixels)')
-    plt.title('Original vs Stab y')
-    plt.legend(['Original', 'Stabilized'])
-    plt.savefig(out_path_plot + "_traj_y.png")
-    plt.close()
-    return
 
 
 # Find the inter-frame transformations array F_transforms
