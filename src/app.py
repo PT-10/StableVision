@@ -24,6 +24,10 @@ with st.sidebar.expander("Advanced Parameters", expanded=False):
         st.subheader("Optical Flow Parameters")
         smoothing_radius = st.slider("Smoothing Radius", min_value=10, max_value=100, value=30, step=5)
         use_kalman = st.checkbox("Use Kalman Filter", value=False)
+        optical_flow_method = st.selectbox(
+            "Select optical flow method:",
+            ("Lucas-Kanade", "Horn-Schunck", "Farneback")
+        )
         max_corners = st.slider("Max Corners", min_value=50, max_value=500, value=200, step=10)
         quality_level = st.slider("Quality Level", min_value=0.01, max_value=0.1, value=0.01, step=0.01)
         min_distance = st.slider("Min Distance", min_value=5, max_value=50, value=30, step=5)
@@ -56,12 +60,20 @@ if uploaded_file is not None:
     with st.spinner(f"Stabilizing video using {method}"):
         # Call the appropriate method
         if method == "Optical Flow":
+            method_mapping = {
+                "Lucas-Kanade": "lk",
+                "Horn-Schunck": "horn-schunck",
+                "Farneback": "farneback"
+            }
+            selected_method = method_mapping[optical_flow_method]
+
             start_time = time.time()
             output_path = optical_flow(
                 input_path, 
                 output_filename, 
                 smoothing_radius=smoothing_radius, 
                 use_kalman=use_kalman, 
+                method = selected_method,
                 maxCorners=max_corners, 
                 qualityLevel=quality_level, 
                 minDistance=min_distance, 
