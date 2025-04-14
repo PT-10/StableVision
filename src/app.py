@@ -76,6 +76,8 @@ if uploaded_file is not None:
     # Generate output file name from uploaded file name
     base_name = os.path.splitext(uploaded_file.name)[0]
     output_filename = f"{base_name}_stabilized.mp4"
+    print("\n"*4)
+    print("INPUT PATH IS HERE",input_path, output_filename)
 
     with st.spinner(f"Stabilizing video using {method}"):
         # Call the appropriate method
