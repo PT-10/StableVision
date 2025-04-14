@@ -174,7 +174,7 @@ def main(args, in_file_path, out_file_path, fourcc):
         evolution_stab = origin @ P_trajectory
         # Get output path
         out_path_camera_plot = join(os.path.dirname(out_file_path), 'plots', in_name)
-        plot_trajectory(evolution_og, evolution_stab, out_path_camera_plot)
+        # plot_trajectory(evolution_og, evolution_stab, out_path_camera_plot)
     # Object to write the output video
     out = cv.VideoWriter(out_file_path, fourcc, fps, (w, h))
     # Stabilize the video frame by frame using the obtained transforms and save it
