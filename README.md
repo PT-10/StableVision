@@ -64,11 +64,13 @@ StableVision/
 
 
 ## Usage
+
 1. Start the streamlit app 
 ```bash
     cd src
     streamlit run app.py
 ```
+![alt text](assets/image.png)
 
 ## Acknowledgements
 This project refers the following repositories:
